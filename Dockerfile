@@ -1,21 +1,24 @@
-FROM alpine
+FROM 0x01be/ludo:build as build
 
-RUN apk add --no-cache --virtual ludo-build-dependencies \
-    git \
-    build-base \
-    go \
-    glfw-dev \
-    mesa-dev \
-    openal-soft-dev \
-    libxcursor-dev \
-    libxrandr-dev \
-    libxi-dev \
-    libx11-dev
+FROM 0x01be/xpra
 
-ENV LUDO_REVISION master
-RUN git clone --recursive --branch ${LUDO_REVISION} https://github.com/libretro/ludo.git /ludo
+COPY --from=build /ludo/ludo /opt/ludo/bin/ludo
+COPY --from=build /ludo/assets /workspace/assets
 
-WORKDIR /ludo
+USER root
 
-RUN make
+RUN apk add --no-cache --virtual ludo-runtime-dependencies \
+    glfw \
+    openal-soft \
+    libxcursor \
+    libxrandr \
+    libxi \
+    libx11 \
+    libxv \
+    mesa-dri-swrast
+
+USER xpra
+
+ENV PATH ${PATH}:/opt/ludo/bin/
+ENV COMMAND "ludo"
 
